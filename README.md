@@ -3,7 +3,9 @@ The branch-and-price framework for Dial-a-ride problem (stay tuned for our next 
 
 # Reference
 "A Branch-and-Price algorithm for the electric autonomous Dial-A-Ride Problem"
+
 Y Su, N Dupin, SN Parragh, J Puchinger
+
 Transportation Research Part B: Methodological 186, 103011
 
 # Instance

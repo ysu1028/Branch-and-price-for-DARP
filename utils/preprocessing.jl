@@ -1,8 +1,6 @@
 # preprocessing of labeling algorithm -> avoid redundance computation
 # Objective: from each pickup node -> output: all the feasible sequence
-# energy 按照最大energy计算 (权衡从P_d/F到pickup): node1必定是pickup点
 ####################################################################################################
-# sequence extend过程中超过时间窗时的处理
 function sequence_update(node1,time1,B_list1,prev1)
     feasibility = true
     delta_t = time1-l[node1]
@@ -24,8 +22,6 @@ function sequence_feasibility(sequence1,node2)
     push!(B_list2,time2)
     prev2 = deepcopy(prev1)
     push!(prev2,node2)
-    # 对违反时间窗的时间变量进行平移,在平移过程中判断可行性:
-    # 1. 平移过程中没有点被移出时间窗 2. 最近的无人点没有被移出arriving time外
     if time2 > l[node2]
         B_list2, fes= sequence_update(node2,time2,B_list2,prev2)
         if fes == false
@@ -66,7 +62,7 @@ function sequence_feasibility(sequence1,node2)
     end
     return feasibility
 end
-# 到达下一个无人点且做完时间优化后，更新excess user ride time
+# update excess user ride time when arriving the next zero-load node
 function sequence_rt(prev1,B_list)
     ERT = 0
     for i in 1:length(prev1)
@@ -116,73 +112,66 @@ function three_passengers_case(partial_route,B_first)
     return obj,service_begin,excess_ride
 end
 
-# 到达下一个无人点时，进行服务开始时间优化
+# when arrive at the next zero-load node，optimize excess user ride time
 function sequence_opt(prev1,B_list)
     B_list1 = deepcopy(B_list)
     # 上一个无人点的index
     idx_zero = 1
-    cap = [q[prev1[idx_zero]]] #从上一个无人点(必须是pickup)到这个无人点的load变化
+    cap = [q[prev1[idx_zero]]]
     for i in idx_zero+1:length(prev1)
         push!(cap,cap[i-idx_zero]+q[prev1[i]])
     end
     max_load = maximum(cap)
-    idx_max_load = find_index(max_load,cap) #idx_max_load:相对位置
+    idx_max_load = find_index(max_load,cap)
 
-    # 不能挪过无人点1的最早时间窗
+    # not earlier than the earliest time window
     delta = [B_list[idx_zero] - e[prev1[1]]]
     for i in idx_zero+1:length(prev1)
         delta_t = B_list[i]-e[prev1[i]]
         if delta_t > 0
             push!(delta,delta_t)
-        else # 找出早到等待的点(B_list[i+1]-t[i,i+1]-s[i]>B_list[i])
+        else # 
             push!(delta,B_list[i-1]+t[prev1[i-1],prev1[i]]+s[prev1[i-1]] - B_list[i])
         end
     end
-    # 记录早到的点的index
+    # for those who arrive earlier than the earliest time window
     idx_early = []
     for i in idx_zero:length(prev1)
         if delta[i-idx_zero+1] < 0
-            push!(idx_early,i-idx_zero+1) # i-idx_zero+1：相对位置
+            push!(idx_early,i-idx_zero+1) # i-idx_zero+1
         end
     end
-    # 分类讨论：载一个乘客，两个乘客，三个乘客的情况，如何优化时间
-    # case1: 若运输一个乘客的情况
+    
+    # case1: one passenger
     if max_load == 1
         if minimum(delta) > 0
-            # 从无人点1到无人点2，能够平移的部分全部放到无人点2
             moving_forward = max(0,minimum(delta))
             for i in idx_zero:length(prev1)
                 B_list[i] -= moving_forward
             end
-        end #如果有比时间窗早到的情况则不能平移，不需要操作
+        end 
     end
-    # case2: 若运输两个乘客的情况
+    # case2: two passengers
     if max_load == 2
         if minimum(delta) > 0
-            # 从无人点1到无人点2，能够平移的部分全部放到无人点2
             moving_forward = max(0,minimum(delta))
             for i in idx_zero:length(prev1)
                 B_list[i] -= moving_forward
             end
-        else #如果有早到的情况需要特别注意是不是load = 2处早到
-            # 注意：不是find_index(max_load,cap)而是其下一个点
-            #println(prev1)
-            #println(B_list)
+        else
             idx_need_to_delay = idx_zero+idx_max_load-1
             delay_supply = l[prev1[idx_need_to_delay]]-B_list[idx_need_to_delay]
             delay_needed = abs(delta[idx_max_load+1])
             if idx_max_load+1 in idx_early
-                # 推迟 idx_max_load的服务开始时间
                 println(prev1)
                 println(B_list)
                 B_list[idx_need_to_delay] += min(delay_supply,delay_needed)
             end
         end
     end
-    # case 3: 运输三个乘客的情况 -> call solver吧
+    # case 3: three passengers or more -> call solver
     if max_load == 3
-        if minimum(delta) > 0 #没有早到的情况
-            # 从无人点1到无人点2，能够平移的部分全部放到无人点2
+        if minimum(delta) > 0
             moving_forward = max(0,minimum(delta))
             for i in idx_zero:length(prev1)
                 B_list[i] -= moving_forward
@@ -194,7 +183,6 @@ function sequence_opt(prev1,B_list)
             B_list[idx_zero:end] = service_time_list
         end
     end
-    # 返回优化好了的B_list(lower bound),以及更新前的B_list(upper bound)
     return B_list,B_list1
 end
 
@@ -271,7 +259,7 @@ function sequence_elimination(sequence_list)
     end
     return new_sequence_list
 end
-# 输入一个pickup，输出其所有的extension
+# input a pickup，output all the extensions
 function all_sequences(node1,weight)
     finished_seq = []
     cap1 = q[node1]
@@ -284,7 +272,7 @@ function all_sequences(node1,weight)
     unproceed_sequences = []
     new_sequences = sequence_extension(sequence_init)
     for i in 1:length(new_sequences)
-        if new_sequences[i][2] == 0 #到达下一个无人点
+        if new_sequences[i][2] == 0 #arrive at the next zero-load node
             sequence2 = new_sequences[i]
             node2,cap2,time2,energy2,prev2,B_list2 = sequence2[1:6]
             # 进行service begin time 优化
@@ -306,7 +294,7 @@ function all_sequences(node1,weight)
         new_sequences = sequence_extension(sequence)
         new_sequences = sequence_elimination(new_sequences)
         for i in 1:length(new_sequences)
-            if new_sequences[i][2] == 0 #到达下一个无人点
+            if new_sequences[i][2] == 0 #arrive at the next zero-load node
                 sequence2 = new_sequences[i]
                 node2,cap2,time2,energy2,prev2,B_list2 = sequence2[1:6]
                 # 进行service begin time 优化

@@ -1,5 +1,10 @@
 # Branch-and-price-for-DARP
-The branch-and-price framework for Dial-a-ride problem.
+The branch-and-price framework for Dial-a-ride problem (stay tuned for our next version: the B&P for the electric autonomous dial-a-ride problem)
+
+# Reference
+"A Branch-and-Price algorithm for the electric autonomous Dial-A-Ride Problem"
+Y Su, N Dupin, SN Parragh, J Puchinger
+Transportation Research Part B: Methodological 186, 103011
 
 # Instance
 We take the smallest instance of Cordeau (2006) as an example

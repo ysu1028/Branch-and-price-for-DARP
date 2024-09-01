@@ -17,7 +17,7 @@ function get_master(omega, cost_omega, weight, branch_decision)
     # cost matrix
     c = deepcopy(cost_omega)
     Pen = ones(numb_user)*1e9 # penalization
-    # 定义 set covering problem
+    # define set covering problem
     SCP = Model(Gurobi.Optimizer)
     set_optimizer_attribute(SCP,"TimeLimit",600)
     @variable(SCP, y[w in 1:length(omega)]) # y_w = 1, the route is used in the solution
@@ -34,12 +34,10 @@ function get_master(omega, cost_omega, weight, branch_decision)
     end
     @constraint(SCP, cons3, sum(y[w] for w in 1:length(omega)) <= numb_veh)
 
-    # NOTE: 利用var 以及veh_cond 添加新的约束条件:注意子节点要继承父节点的constraint
+    # NOTE: child node must inherit the constraints from parent
     new_cons = Dict()
-    #首先要排除"flow_var"
     if branch_decision != []
         for i in 1:length(branch_decision)
-            # 利用字符串来定义分支策略
             branch_type, branch_var, branch_direction = branch_decision[i][1:3]
             if branch_direction == ">="
                 if branch_type == "total_veh"
@@ -64,7 +62,7 @@ function get_master(omega, cost_omega, weight, branch_decision)
       @constraint(SCP,a[i] >= 0)
     end
     JuMP.optimize!(SCP)
-    # 对status进行判断
+    # check the status of solution
     primal_feasible = primal_status(SCP) == JuMP.MOI.FEASIBLE_POINT
     dual_feasible = dual_status(SCP) == JuMP.MOI.FEASIBLE_POINT
     is_rmp_optimal = primal_feasible &&  dual_feasible
@@ -97,7 +95,7 @@ function get_master(omega, cost_omega, weight, branch_decision)
                 end
             end
         end
-        # 把newly-introduced的constraints的对偶变量值合并到dual3里面
+        # include duals of new_cons into dual3
         dual3_prime = dual3
         if add_dual != []
             dual3_prime += sum(add_dual)
@@ -122,7 +120,7 @@ end
 
 # upper bound calculation (integer RMP)
 function Int_RMP(omega,cost_omega,weight,branch_decision)
-    # 定义系数矩阵
+    # define the coefficients
     b1 = zeros(numb_nodes, length(omega))
     b2 = zeros(numb_nodes, length(omega))
     for i in 1:length(omega)
@@ -141,7 +139,7 @@ function Int_RMP(omega,cost_omega,weight,branch_decision)
     c = deepcopy(cost_omega)
     Pen = ones(numb_user)*1000 # penalization
 
-    # 定义 set covering problem
+    # define set covering problem
     SCP = Model(Gurobi.Optimizer)
     set_optimizer_attribute(SCP,"TimeLimit",3600)
     @variable(SCP, y[w in 1:length(omega)], Bin) # y_w = 1, the route is used in the solution
@@ -198,7 +196,7 @@ function column_generation(omega,cost_omega,branch_decision,weight)
     elapsedTime = 0
     obj = -1000
     t1 = time_ns()
-    # terminate criterion: no more negative reduced cost column, reach iteration times, reach time limit (5 hours)
+    # terminate criterion: no more negative reduced cost column, reach iteration times, reach time limit (2 hours)
     while elapsedTime <= 3600*2 && obj < -0.0001
         t2 = time_ns()
         elapsedTime = (t2-t1)/1.0e9
@@ -232,7 +230,7 @@ function column_generation(omega,cost_omega,branch_decision,weight)
         iter += 1
     end
     #println("\e[1;45m the continuous RMP objective value is [$(obj1)] \e[00m")
-    # 如果最后的解仍然cost>1000 (infeasible), 则返回[]
+    # if the solution has cost>1000 (means: infeasible), return []
     if obj1 > 1000
         return Inf, Inf, [], [], column_pool, cost_columns
     else

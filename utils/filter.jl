@@ -1,15 +1,14 @@
 """
- Filters for columns, segments
-     + filter_columns 可能可以优化（去掉对decision的循环，只用对branch_decision新添加的decision进行filter）
+ Filters for columns
 """
 # calculate the set of lower bound with branches
 function filter_col_with_flow_var(cols,cost_cols,flow_branch_decision)
     columns = []
     cost_columns = []
-    # 如果branch_decision中有branch on flow var, 筛选继承下来的column
+    # if branch_decision has branch on flow var, filter inherited columns
     if flow_branch_decision != []
         branch_type, branch_var, branch_direction = flow_branch_decision[1:3]
-        if branch_type == "flow_var" && branch_direction == "<=" #说明i之后不能是j
+        if branch_type == "flow_var" && branch_direction == "<=" # forbiden arc from i to j
             println("the flow variable decision is:", flow_branch_decision)
             first_node = branch_var[1]
             second_node = branch_var[2]
@@ -28,7 +27,7 @@ function filter_col_with_flow_var(cols,cost_cols,flow_branch_decision)
                     end
                 end
             end
-        elseif branch_type == "flow_var" && branch_direction == ">=" #说明有i的话下一个必须是j,且有j的话上一个必须是i
+        elseif branch_type == "flow_var" && branch_direction == ">="
             println("the flow variable decision is:", flow_branch_decision)
             first_node = branch_var[1]
             second_node = branch_var[2]

@@ -1,18 +1,15 @@
-# NOTE: 对于cordeau instances， 起点处的flow branch没有意义，因为起点位置都是一样的
-# NOTE: 对于Uber instances， 起点处的flow branch是有意义的
+
 function branching_decision(frac_sol,fraction)
-    #避免numerical problem 进行四舍五入处理
     #frac = round.(fraction,digits=4)
     frac = deepcopy(fraction)
-    # 如果输入的已经是整数解，则返回空集
     if integer_or_not(fraction) == true
         return []
     end
-    # 首先判断on the total number of routes
-    if round.(sum(fraction),digits=2)%1 != 0.0  #模1不是0.0 => 不是整数
-        return ["total_veh", sum(frac)] #选用第一种策略
+    # branch on the total number of routes
+    if round.(sum(fraction),digits=2)%1 != 0.0  
+        return ["total_veh", sum(frac)] 
     end
-    # 判断第四种策略: branch on the total flow on an arc of G
+    # branch on the total flow on an arc of G
     arc_list = []
     arc_frac_list = []
     for i in 1:length(frac_sol)
@@ -38,7 +35,7 @@ function branching_decision(frac_sol,fraction)
             push!(fractions,values)
         end
     end
-    # 排除掉已经是整数的frac variable
+    
     frac_variable1 = []
     fractions1 = []
     for i in 1:length(fractions)

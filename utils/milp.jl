@@ -31,16 +31,10 @@ function column_generator(duals,weight,branch_decision)
             if branch_type == "flow_var" && branch_direction == "<=" # from i cannot go to j
                 first_node = branch_var[1]
                 second_node = branch_var[2]
-                # if node1 == first_node && node2 == second_node
-                #     return false
-                # end
                 @constraint(e_ADARP3,x[first_node,second_node] == 0)
             elseif branch_type == "flow_var" && branch_direction == ">=" # from i must go to j
                 first_node = branch_var[1]
                 second_node = branch_var[2]
-                # if node1 == first_node && node2 != second_node
-                #     return false
-                # end
                 @constraint(e_ADARP3,x[first_node,second_node] == 1)
             end
         end
@@ -101,39 +95,6 @@ function column_generator(duals,weight,branch_decision)
     for i in union(P_d,D_d,F)
         @constraint(e_ADARP3, L[i] ==0)
     end
-
-    # for i in P_d
-    #     @constraint(e_ADARP3, B[i] <= BC[1])
-    # end
-    #
-    # for i in setdiff(V,F)
-    #     for j in setdiff(V,P_d)
-    #         @constraint(e_ADARP3, B[j] <= B[i] - beta*t[i,j] + BC[1]*(1-x[i,j]))
-    #         @constraint(e_ADARP3, B[j] >= B[i] - beta*t[i,j] - BC[1]*(1-x[i,j]))
-    #     end
-    # end
-    #
-    # for f in F
-    #     for j in union(P_u,D_d,F)
-    #         @constraint(e_ADARP3, B[j] <= B[f] + alfa[f-F[1]+1]*E[f] - beta*t[f,j] +  BC[1]*(1-x[f,j]))
-    #         @constraint(e_ADARP3, B[j] >= B[f] + alfa[f-F[1]+1]*E[f] - beta*t[f,j] -  BC[1]*(1-x[f,j]))
-    #     end
-    # end
-    #
-    # for f in F
-    #     @constraint(e_ADARP3, BC[1] >= B[f] +alfa[f-F[1]+1]*E[f])
-    # end
-    #
-    # for i in D_d
-    #     @constraint(e_ADARP3, B[i] >= gama[1]*BC[1])
-    # end
-    #
-    # for f in F
-    #     for i in union(P_u,D_d,F)
-    #         @constraint(e_ADARP3, E[f] <= T[i] - t[f,i] - T[f] + l[D_d[1]]*(1-x[f,i]))
-    #         @constraint(e_ADARP3, E[f] >= T[i] - t[f,i] - T[f] - l[D_d[1]]*(1-x[f,i]))
-    #     end
-    # end
 
     for i in V
         # @constraint(e_ADARP3, B[i] >= 0)

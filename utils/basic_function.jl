@@ -103,7 +103,7 @@ end
 # Feasibility Check #
 #####################
 # vehicle load constraint check
-function load_valid(route,k) #输入要check的route以及车号
+function load_valid(route,k)
   feasibility = true
   seg_list = split_route(route)
   for i in 1:length(seg_list)
@@ -118,11 +118,11 @@ end
 function battery_valid(route,k)
   route1, I_path_tw, T_prime, H_prime = simple_route(route)
   seg_list = split_route(route)
-  rc_n1 = [i for i in route1 if i ∈ charging_station] #充电站的集合
+  rc_n1 = [i for i in route1 if i ∈ charging_station]
   # initial values for related resources
   T_min, T_max, T_rtmax = [0.0], [0.0], [0.0]
   feasibility = true
-  # 首先判断充电桩是否最多visit一次
+
   counter = zeros(1,numb_recharging)
   if length(rc_n1) > 0
     for i in 1:length(rc_n1)
@@ -134,11 +134,11 @@ function battery_valid(route,k)
       end
     end
   end
-  # 对电量，时间窗的判断
+
   for i in 2:length(route1)
     node1 = route1[i-1]
     node2 = route1[i]
-    if node1 ∈ P_u #上车点必为segment起始点，按段延展
+    if node1 ∈ P_u 
       idx_seg = find_index(node1,[seg_list[j][1] for j in 1:length(seg_list)])
       sequence = seg_list[idx_seg]
       t_prime = T_prime[idx_seg]
@@ -181,7 +181,7 @@ function battery_valid(route,k)
         #println("from $node1 to $node2 the judgement 3 is violated!")
         return false
       end
-    else # 其余情况: 按边延展
+    else 
       t_prime = t[node1,node2] + s[node1]
       e_prime = e[node2]
       l_prime = l[node2]
@@ -247,7 +247,7 @@ end
 
 function is_feasible_tour(route,k)
   feasibility = 1
-  # 注意这里要在判断时间窗前先判断电量，因为有可能会改变路径
+
   if load_valid(route,k)&& battery_valid(route,k)[1]
     feasibility = 1
   else

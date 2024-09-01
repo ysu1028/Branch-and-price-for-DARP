@@ -4,6 +4,7 @@ The branch-and-price framework for Dial-a-ride problem.
 # Instance
 We take the smallest instance of Cordeau (2006) as an example
 The instance (a2-16-0.7) consists of two vehicles and 16 user requests. It has the following format:
+
 Instance names: <a/u><numvehicles>-<numcustomers>-<minimum end battery ratio levels>
 
 #vehicles #users #origindepots #destinationdepots #stations #replications #time horizon
